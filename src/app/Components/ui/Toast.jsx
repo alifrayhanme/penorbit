@@ -36,16 +36,7 @@ const Toast = ({
         </div>
       )}
       
-      {loading && (
-        <div className={positions.center}>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 shadow-lg">
-            <div className="flex items-center gap-2">
-              <LoadingSpinner size="sm" />
-              <span className="text-blue-700">Processing...</span>
-            </div>
-          </div>
-        </div>
-      )}
+
     </>
   );
 };

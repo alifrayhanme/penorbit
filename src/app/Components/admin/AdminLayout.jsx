@@ -33,14 +33,7 @@ const AdminLayout = ({
           </Alert>
         )}
         
-        {actionLoading && (
-          <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded">
-            <div className="flex items-center gap-2">
-              <LoadingSpinner size="sm" />
-              <span className="text-blue-700">Processing...</span>
-            </div>
-          </div>
-        )}
+
         
         <div className="flex flex-wrap gap-4 mb-6">
           {tabs.map(tab => (

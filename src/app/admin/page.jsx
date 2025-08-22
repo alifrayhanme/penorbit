@@ -14,27 +14,28 @@ import { formatDate, isAdmin } from "@/lib/utils";
 
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
-  const { data: posts = [], loading: postsLoading, refetch: refetchPosts } = useFetch('/api/posts');
-  const { data: users = [], loading: usersLoading, refetch: refetchUsers } = useFetch('/api/users');
-  const { data: newsletterData = {}, loading: newsletterLoading, refetch: refetchNewsletter } = useFetch('/api/newsletter');
-  const { data: contacts = [], loading: contactsLoading, refetch: refetchContacts } = useFetch('/api/contact');
+  const { data: posts = [], refetch: refetchPosts } = useFetch('/api/posts');
+  const { data: users = [], refetch: refetchUsers } = useFetch('/api/users');
+  const { data: newsletterData = {}, refetch: refetchNewsletter } = useFetch('/api/newsletter');
+  const { data: contacts = [], refetch: refetchContacts } = useFetch('/api/contact');
   const [activeTab, setActiveTab] = useState('overview');
-  const [actionLoading, setActionLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   
   const subscribers = newsletterData?.subscribers || [];
-  const loading = postsLoading || usersLoading || newsletterLoading || contactsLoading;
 
-
-
-
+  useEffect(() => {
+    if (posts && users && newsletterData && contacts) {
+      setLoading(false);
+    }
+  }, [posts, users, newsletterData, contacts]);
 
   const handleUserStatusChange = async (userId, newStatus) => {
     if (!userId) {
       setMessage("Invalid user ID");
       return;
     }
-    setActionLoading(true);
+    setLoading(true);
     try {
       const res = await fetch(`/api/users/${userId}`, {
         method: "PUT",
@@ -54,7 +55,7 @@ export default function AdminDashboard() {
       console.error("Error updating user:", error);
       setMessage("Error updating user");
     } finally {
-      setActionLoading(false);
+      setLoading(false);
     }
   };
 
@@ -65,7 +66,7 @@ export default function AdminDashboard() {
     }
     if (!confirm("Are you sure you want to delete this user?")) return;
 
-    setActionLoading(true);
+    setLoading(true);
     try {
       const res = await fetch(`/api/users/${userId}`, {
         method: "DELETE",
@@ -85,14 +86,14 @@ export default function AdminDashboard() {
       console.error("Error deleting user:", error);
       setMessage("Error deleting user");
     } finally {
-      setActionLoading(false);
+      setLoading(false);
     }
   };
 
   const handleDeleteComment = async (postId, commentId) => {
     if (!confirm("Are you sure you want to delete this comment?")) return;
 
-    setActionLoading(true);
+    setLoading(true);
     try {
       const res = await fetch(`/api/comments`, {
         method: "DELETE",
@@ -111,12 +112,12 @@ export default function AdminDashboard() {
       console.error("Error deleting comment:", error);
       setMessage("Error deleting comment");
     } finally {
-      setActionLoading(false);
+      setLoading(false);
     }
   };
 
   const handleSuspendComment = async (postId, commentId) => {
-    setActionLoading(true);
+    setLoading(true);
     try {
       const res = await fetch(`/api/comments`, {
         method: "PUT",
@@ -135,12 +136,12 @@ export default function AdminDashboard() {
       console.error("Error updating comment:", error);
       setMessage("Error updating comment");
     } finally {
-      setActionLoading(false);
+      setLoading(false);
     }
   };
 
   const handleUpdateContactStatus = async (contactId, newStatus) => {
-    setActionLoading(true);
+    setLoading(true);
     try {
       const res = await fetch(`/api/contact/${contactId}`, {
         method: "PUT",
@@ -158,14 +159,14 @@ export default function AdminDashboard() {
     } catch (error) {
       setMessage("Error updating message");
     } finally {
-      setActionLoading(false);
+      setLoading(false);
     }
   };
 
   const handleDeleteContact = async (contactId) => {
     if (!confirm("Are you sure you want to delete this message?")) return;
     
-    setActionLoading(true);
+    setLoading(true);
     try {
       const res = await fetch(`/api/contact/${contactId}`, {
         method: "DELETE",
@@ -183,14 +184,14 @@ export default function AdminDashboard() {
     } catch (error) {
       setMessage("Error deleting message");
     } finally {
-      setActionLoading(false);
+      setLoading(false);
     }
   };
 
   const handleDeleteSubscriber = async (subscriberId) => {
     if (!confirm("Are you sure you want to delete this subscriber?")) return;
     
-    setActionLoading(true);
+    setLoading(true);
     try {
       const res = await fetch(`/api/newsletter/${subscriberId}`, {
         method: "DELETE",
@@ -208,12 +209,12 @@ export default function AdminDashboard() {
     } catch (error) {
       setMessage("Error deleting subscriber");
     } finally {
-      setActionLoading(false);
+      setLoading(false);
     }
   };
 
   const handleSuspendPost = async (postId) => {
-    setActionLoading(true);
+    setLoading(true);
     try {
       const res = await fetch(`/api/posts/${postId}`, {
         method: "PUT",
@@ -232,14 +233,14 @@ export default function AdminDashboard() {
       console.error("Error updating post:", error);
       setMessage("Error updating post");
     } finally {
-      setActionLoading(false);
+      setLoading(false);
     }
   };
 
   const handleDeletePost = async (postId) => {
     if (!confirm("Are you sure you want to delete this post?")) return;
 
-    setActionLoading(true);
+    setLoading(true);
     try {
       const res = await fetch(`/api/posts/${postId}`, {
         method: "DELETE",
@@ -258,11 +259,9 @@ export default function AdminDashboard() {
       console.error("Error deleting post:", error);
       setMessage("Error deleting post");
     } finally {
-      setActionLoading(false);
+      setLoading(false);
     }
   };
-
-
 
   if (authLoading) {
     return (
@@ -303,8 +302,6 @@ export default function AdminDashboard() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
-        
-
         
         <div className="flex flex-wrap gap-4  mb-6">
           {[
@@ -401,7 +398,7 @@ export default function AdminDashboard() {
                                 size="sm"
                                 variant={u.status === 'active' ? 'danger' : 'success'}
                                 onClick={() => handleUserStatusChange(u.id || u._id, u.status === 'active' ? 'suspended' : 'active')}
-                                disabled={actionLoading}
+                                disabled={loading}
                               >
                                 {u.status === 'active' ? 'Suspend' : 'Activate'}
                               </Button>
@@ -409,7 +406,7 @@ export default function AdminDashboard() {
                                 size="sm"
                                 variant="danger"
                                 onClick={() => handleDeleteUser(u.id || u._id)}
-                                disabled={actionLoading}
+                                disabled={loading}
                               >
                                 Delete
                               </Button>
@@ -465,7 +462,7 @@ export default function AdminDashboard() {
                                     size="sm"
                                     variant={comment.status === 'suspended' ? 'success' : 'danger'}
                                     onClick={() => handleSuspendComment(post._id, comment.id)}
-                                    disabled={actionLoading}
+                                    disabled={loading}
                                   >
                                     {comment.status === 'suspended' ? 'Activate' : 'Suspend'}
                                   </Button>
@@ -473,7 +470,7 @@ export default function AdminDashboard() {
                                     size="sm"
                                     variant="danger"
                                     onClick={() => handleDeleteComment(post._id, comment.id)}
-                                    disabled={actionLoading}
+                                    disabled={loading}
                                   >
                                     Delete
                                   </Button>
@@ -525,7 +522,7 @@ export default function AdminDashboard() {
                             size="sm"
                             variant="danger"
                             onClick={() => handleDeleteSubscriber(subscriber._id || subscriber.id)}
-                            disabled={actionLoading}
+                            disabled={loading}
                           >
                             Delete
                           </Button>
@@ -577,7 +574,7 @@ export default function AdminDashboard() {
                         size="sm"
                         variant={contact.status === 'unread' ? 'success' : 'primary'}
                         onClick={() => handleUpdateContactStatus(contact._id, contact.status === 'unread' ? 'read' : 'unread')}
-                        disabled={actionLoading}
+                        disabled={loading}
                       >
                         Mark as {contact.status === 'unread' ? 'Read' : 'Unread'}
                       </Button>
@@ -585,7 +582,7 @@ export default function AdminDashboard() {
                         size="sm"
                         variant="danger"
                         onClick={() => handleDeleteContact(contact._id)}
-                        disabled={actionLoading}
+                        disabled={loading}
                       >
                         Delete
                       </Button>
@@ -650,7 +647,7 @@ export default function AdminDashboard() {
                               size="sm"
                               variant={post.status === 'suspended' ? 'success' : 'danger'}
                               onClick={() => handleSuspendPost(post._id)}
-                              disabled={actionLoading}
+                              disabled={loading}
                             >
                               {post.status === 'suspended' ? 'Activate' : 'Suspend'}
                             </Button>
@@ -658,7 +655,7 @@ export default function AdminDashboard() {
                               size="sm"
                               variant="danger"
                               onClick={() => handleDeletePost(post._id)}
-                              disabled={actionLoading}
+                              disabled={loading}
                             >
                               Delete
                             </Button>
@@ -673,7 +670,7 @@ export default function AdminDashboard() {
           </Card>
         )}
       </div>
-      <Toast message={message} setMessage={setMessage} loading={actionLoading} />
+      <Toast message={message} setMessage={setMessage} loading={loading} />
     </div>
   );
 }
