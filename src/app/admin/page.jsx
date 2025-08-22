@@ -1,0 +1,654 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Button from "@/app/Components/ui/Button";
+import Card from "@/app/Components/ui/Card";
+import LoadingSpinner from "@/app/Components/ui/LoadingSpinner";
+import Alert from "@/app/Components/ui/Alert";
+
+import { useAuth } from "@/hooks/useAuth";
+import { useFetch } from "@/hooks/useFetch";
+import { formatDate, isAdmin } from "@/lib/utils";
+
+export default function AdminDashboard() {
+  const { user, loading: authLoading } = useAuth();
+  const { data: posts = [], loading: postsLoading, refetch: refetchPosts } = useFetch('/api/posts');
+  const { data: users = [], loading: usersLoading, refetch: refetchUsers } = useFetch('/api/users');
+  const { data: newsletterData = {}, loading: newsletterLoading } = useFetch('/api/newsletter');
+  const { data: contacts = [], loading: contactsLoading, refetch: refetchContacts } = useFetch('/api/contact');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  
+  const subscribers = newsletterData?.subscribers || [];
+  const loading = postsLoading || usersLoading || newsletterLoading || contactsLoading;
+
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(''), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
+
+
+  const handleUserStatusChange = async (userId, newStatus) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus, adminEmail: user?.email })
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) {
+        setMessage(`User ${newStatus} successfully`);
+        await refetchUsers();
+      } else {
+        setMessage(data.error || "Failed to update user status");
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+      setMessage("Error updating user");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: user?.email })
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) {
+        setMessage("User deleted successfully");
+        await refetchUsers();
+      } else {
+        setMessage(data.error || "Failed to delete user");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      setMessage("Error deleting user");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteComment = async (postId, commentId) => {
+    if (!confirm("Are you sure you want to delete this comment?")) return;
+
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/comments`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, commentId })
+      });
+
+      if (res.ok) {
+        setMessage("Comment deleted successfully");
+        await refetchPosts();
+      } else {
+        const data = await res.json();
+        setMessage(data.error || "Failed to delete comment");
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      setMessage("Error deleting comment");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSuspendComment = async (postId, commentId) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/comments`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, commentId })
+      });
+
+      if (res.ok) {
+        setMessage("Comment status updated");
+        await refetchPosts();
+      } else {
+        const data = await res.json();
+        setMessage(data.error || "Failed to update comment");
+      }
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      setMessage("Error updating comment");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpdateContactStatus = async (contactId, newStatus) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/contact/${contactId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus, adminEmail: user?.email })
+      });
+
+      if (res.ok) {
+        setMessage(`Message marked as ${newStatus}`);
+        refetchContacts();
+      } else {
+        const data = await res.json();
+        setMessage(data.error || "Failed to update message status");
+      }
+    } catch (error) {
+      setMessage("Error updating message");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteContact = async (contactId) => {
+    if (!confirm("Are you sure you want to delete this message?")) return;
+    
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/contact/${contactId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: user?.email })
+      });
+
+      if (res.ok) {
+        setMessage("Message deleted successfully");
+        refetchContacts();
+      } else {
+        const data = await res.json();
+        setMessage(data.error || "Failed to delete message");
+      }
+    } catch (error) {
+      setMessage("Error deleting message");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSuspendPost = async (postId) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/posts/${postId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: user?.email })
+      });
+
+      if (res.ok) {
+        setMessage("Post status updated successfully");
+        await refetchPosts();
+      } else {
+        const data = await res.json();
+        setMessage(data.error || "Failed to update post status");
+      }
+    } catch (error) {
+      console.error("Error updating post:", error);
+      setMessage("Error updating post");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/posts/${postId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: user?.email })
+      });
+
+      if (res.ok) {
+        setMessage("Post deleted successfully");
+        await refetchPosts();
+      } else {
+        const data = await res.json();
+        setMessage(data.error || "Failed to delete post");
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      setMessage("Error deleting post");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Alert type="error" className="mb-4">
+            Please sign in to access admin dashboard
+          </Alert>
+          <Button as={Link} href="/auth/signin">Sign In</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin(user)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <Alert type="error" className="mb-4">
+            You don't have admin privileges. Current role: {user.role}
+          </Alert>
+          <Button as={Link} href="/">Go Home</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
+        
+        {message && (
+          <Alert 
+            type={message.includes('success') || message.includes('deleted') || message.includes('updated') ? 'success' : 'error'}
+            className="mb-4"
+          >
+            {message}
+          </Alert>
+        )}
+        
+        {actionLoading && (
+          <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded">
+            <div className="flex items-center gap-2">
+              <LoadingSpinner size="sm" />
+              <span className="text-blue-700">Processing...</span>
+            </div>
+          </div>
+        )}
+        
+        <div className="flex space-x-4 mb-6">
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'users', label: 'Users' },
+            { id: 'posts', label: 'Posts' },
+            { id: 'comments', label: 'Comments' },
+            { id: 'newsletter', label: 'Newsletter' },
+            { id: 'contacts', label: `Messages ${(contacts || []).filter(c => c?.status === 'unread').length > 0 ? `(${(contacts || []).filter(c => c?.status === 'unread').length})` : ''}` },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded ${
+                activeTab === tab.id ? 'bg-blue-600 text-white' : 'bg-gray-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {loading && (
+          <div className="flex justify-center py-10">
+            <LoadingSpinner size="lg" />
+          </div>
+        )}
+
+        {!loading && activeTab === 'overview' && (
+          <div className="grid md:grid-cols-4 gap-4">
+            {[
+              { title: 'Total Users', value: users.length, color: 'blue' },
+              { title: 'Total Posts', value: posts.length, color: 'green' },
+              { title: 'Total Comments', value: posts.reduce((total, post) => total + (post.comments?.length || 0), 0), color: 'purple' },
+              { title: 'Newsletter Subscribers', value: subscribers.length, color: 'orange' },
+            ].map((stat, index) => {
+              const colorClasses = {
+                blue: 'bg-blue-100 text-blue-800',
+                green: 'bg-green-100 text-green-800',
+                purple: 'bg-purple-100 text-purple-800',
+                orange: 'bg-orange-100 text-orange-800',
+              };
+              return (
+                <div key={index} className={`${colorClasses[stat.color].split(' ')[0]} p-4 rounded-lg`}>
+                  <h3 className={`font-semibold ${colorClasses[stat.color].split(' ')[1]}`}>
+                    {stat.title}
+                  </h3>
+                  <p className={`text-2xl font-bold text-${stat.color}-600`}>
+                    {stat.value}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {!loading && activeTab === 'users' && (
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-6">User Management</h2>
+            
+            {users.length === 0 ? (
+              <p className="text-gray-600">No users found.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full table-auto">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-2 text-left">Name</th>
+                      <th className="px-4 py-2 text-left">Email</th>
+                      <th className="px-4 py-2 text-left">Role</th>
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((u) => (
+                      <tr key={u._id || u.id} className="border-t">
+                        <td className="px-4 py-2">{u.name}</td>
+                        <td className="px-4 py-2">{u.email}</td>
+                        <td className="px-4 py-2">
+                          <span className={`px-2 py-1 rounded text-xs ${u.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2">
+                          <span className={`px-2 py-1 rounded text-xs ${u.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                            {u.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2">
+                          {u.email !== 'admin@penorbit.com' ? (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant={u.status === 'active' ? 'danger' : 'success'}
+                                onClick={() => handleUserStatusChange(u.id, u.status === 'active' ? 'suspended' : 'active')}
+                                disabled={actionLoading}
+                              >
+                                {u.status === 'active' ? 'Suspend' : 'Activate'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                onClick={() => handleDeleteUser(u.id)}
+                                disabled={actionLoading}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 text-xs">Admin (Protected)</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {!loading && activeTab === 'comments' && (
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-6">Comment Management</h2>
+            
+            <div className="space-y-6">
+              {posts && posts.length > 0 ? (
+                posts
+                  .filter(post => post.comments && post.comments.length > 0)
+                  .map((post) => (
+                    <div key={`post-${post._id || post.id}`} className="border rounded-lg p-4">
+                      <h3 className="font-semibold mb-3">
+                        Comments on: <Link href={`/post/${post.id}`} className="text-blue-600 hover:underline">{post.title}</Link>
+                      </h3>
+                      <div className="space-y-2">
+                        {post.comments
+                          .filter(comment => comment && comment.id)
+                          .map((comment) => (
+                            <div key={`comment-${post._id || post.id}-${comment.id}`} className={`p-3 rounded border-l-4 ${
+                              comment.status === 'suspended' ? 'border-red-500 bg-red-50' : 'border-green-500 bg-green-50'
+                            }`}>
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <p className="font-medium">{comment.user || 'Anonymous'}</p>
+                                  <p className="text-gray-700 mt-1">{comment.text}</p>
+                                  <p className="text-xs text-gray-500 mt-2">
+                                    {comment.createdAt ? formatDate(comment.createdAt) : 'Unknown date'} - 
+                                    <span className={`ml-1 px-2 py-1 rounded text-xs ${
+                                      comment.status === 'suspended' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                                    }`}>
+                                      {comment.status || 'active'}
+                                    </span>
+                                  </p>
+                                </div>
+                                <div className="flex gap-2 ml-4">
+                                  <Button
+                                    size="sm"
+                                    variant={comment.status === 'suspended' ? 'success' : 'danger'}
+                                    onClick={() => handleSuspendComment(post.id, comment.id)}
+                                    disabled={actionLoading}
+                                  >
+                                    {comment.status === 'suspended' ? 'Activate' : 'Suspend'}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="danger"
+                                    onClick={() => handleDeleteComment(post.id, comment.id)}
+                                    disabled={actionLoading}
+                                  >
+                                    Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        }
+                      </div>
+                    </div>
+                  ))
+              ) : null}
+              {!posts || posts.length === 0 || posts.every(post => !post.comments || post.comments.length === 0) ? (
+                <p className="text-gray-600">No comments found.</p>
+              ) : null}
+            </div>
+          </Card>
+        )}
+
+        {!loading && activeTab === 'newsletter' && (
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-6">Newsletter Subscribers ({subscribers.length})</h2>
+            
+            {subscribers.length === 0 ? (
+              <p className="text-gray-600">No subscribers yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full table-auto">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-2 text-left">Email</th>
+                      <th className="px-4 py-2 text-left">Subscribed Date</th>
+                      <th className="px-4 py-2 text-left">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subscribers.map((subscriber) => (
+                      <tr key={subscriber._id || subscriber.id} className="border-t">
+                        <td className="px-4 py-2">{subscriber.email}</td>
+                        <td className="px-4 py-2">{formatDate(subscriber.subscribedAt)}</td>
+                        <td className="px-4 py-2">
+                          <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">
+                            {subscriber.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {!loading && activeTab === 'contacts' && (
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-6">Contact Messages ({contacts.length})</h2>
+            
+            {contacts.length === 0 ? (
+              <p className="text-gray-600">No messages yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {contacts.map((contact) => (
+                  <div key={contact._id || contact.id} className={`border rounded-lg p-4 ${
+                    contact.status === 'unread' ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'
+                  }`}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="font-semibold text-lg">{contact.subject}</h3>
+                        <p className="text-sm text-gray-600">
+                          From: <strong>{contact.name}</strong> ({contact.email})
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatDate(contact.createdAt)}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        contact.status === 'unread' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {contact.status}
+                      </span>
+                    </div>
+                    <div className="bg-white p-3 rounded border">
+                      <p className="text-gray-700 whitespace-pre-wrap">{contact.message}</p>
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant={contact.status === 'unread' ? 'success' : 'primary'}
+                        onClick={() => handleUpdateContactStatus(contact.id, contact.status === 'unread' ? 'read' : 'unread')}
+                        disabled={actionLoading}
+                      >
+                        Mark as {contact.status === 'unread' ? 'Read' : 'Unread'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleDeleteContact(contact.id)}
+                        disabled={actionLoading}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        as="a"
+                        href={`mailto:${contact.email}?subject=Re: ${contact.subject}`}
+                      >
+                        Reply via Email
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
+
+        {!loading && activeTab === 'posts' && (
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-6">Post Management</h2>
+            
+            {posts.length === 0 ? (
+              <p className="text-gray-600">No posts found.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full table-auto">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-2 text-left">Title</th>
+                      <th className="px-4 py-2 text-left">Author</th>
+                      <th className="px-4 py-2 text-left">Date</th>
+                      <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Likes</th>
+                      <th className="px-4 py-2 text-left">Comments</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {posts.map((post) => (
+                      <tr key={post._id || post.id} className="border-t">
+                        <td className="px-4 py-2">
+                          <Link href={`/post/${post.id}`} className="text-blue-600 hover:underline">
+                            {post.title}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2">{post.author?.name || "Unknown"}</td>
+                        <td className="px-4 py-2">{formatDate(post.createdAt)}</td>
+                        <td className="px-4 py-2">
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            post.status === 'suspended' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                          }`}>
+                            {post.status || 'active'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2">{post.likes || 0}</td>
+                        <td className="px-4 py-2">{post.comments?.length || 0}</td>
+                        <td className="px-4 py-2">
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant={post.status === 'suspended' ? 'success' : 'danger'}
+                              onClick={() => handleSuspendPost(post.id)}
+                              disabled={actionLoading}
+                            >
+                              {post.status === 'suspended' ? 'Activate' : 'Suspend'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              onClick={() => handleDeletePost(post.id)}
+                              disabled={actionLoading}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
