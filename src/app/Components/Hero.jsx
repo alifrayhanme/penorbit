@@ -12,7 +12,7 @@ const Hero = () => {
 
   if (posts.length === 0) {
     return (
-      <div className="relative h-96 bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white">
+      <div className=" relative h-96 sm:h-[600px] bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white">
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-4">
             Welcome to PenOrbit

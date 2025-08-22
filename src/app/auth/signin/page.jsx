@@ -8,13 +8,14 @@ import Input from "@/app/Components/ui/Input";
 import Button from "@/app/Components/ui/Button";
 import Alert from "@/app/Components/ui/Alert";
 import Toast from "@/app/Components/ui/Toast";
+import { useMessage } from "@/hooks/useMessage";
 import { validateEmail, validatePassword } from '@/lib/utils';
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { message: error, setMessage: setError } = useMessage();
   const router = useRouter();
 
   const handleSubmit = async (e) => {
@@ -96,7 +97,7 @@ export default function SignIn() {
           </div>
         </form>
       </div>
-      <Toast message={error} setMessage={setError} position="top-center" />
+      <Toast message={error} setMessage={setError} position="top-center" loading={loading} />
     </div>
   );
 }

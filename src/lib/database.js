@@ -232,6 +232,11 @@ export const db = {
     const result = await database.collection(collections.SUBSCRIBERS).findOneAndDelete({ email });
     return result;
   },
+  deleteSubscriber: async (id) => {
+    const database = await getDb();
+    const result = await database.collection(collections.SUBSCRIBERS).findOneAndDelete({ _id: parseInt(id) });
+    return result;
+  },
 
   // Contacts
   getContacts: async () => {

@@ -8,6 +8,8 @@ import Input from "@/app/Components/ui/Input";
 import Button from "@/app/Components/ui/Button";
 import Alert from "@/app/Components/ui/Alert";
 import Toast from "@/app/Components/ui/Toast";
+import { useMessage } from "@/hooks/useMessage";
+import { useApi } from "@/hooks/useApi";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -17,9 +19,9 @@ export default function SignUp() {
     profession: "",
     profilePic: ""
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const { message: error, setMessage: setError, showSuccess, showError } = useMessage();
+  const { message: success, setMessage: setSuccess } = useMessage();
+  const api = useApi();
   const router = useRouter();
 
   const handleChange = (field) => (e) => {

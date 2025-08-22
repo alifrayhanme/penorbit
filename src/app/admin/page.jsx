@@ -16,7 +16,7 @@ export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { data: posts = [], loading: postsLoading, refetch: refetchPosts } = useFetch('/api/posts');
   const { data: users = [], loading: usersLoading, refetch: refetchUsers } = useFetch('/api/users');
-  const { data: newsletterData = {}, loading: newsletterLoading } = useFetch('/api/newsletter');
+  const { data: newsletterData = {}, loading: newsletterLoading, refetch: refetchNewsletter } = useFetch('/api/newsletter');
   const { data: contacts = [], loading: contactsLoading, refetch: refetchContacts } = useFetch('/api/contact');
   const [activeTab, setActiveTab] = useState('overview');
   const [actionLoading, setActionLoading] = useState(false);
@@ -182,6 +182,31 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       setMessage("Error deleting message");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteSubscriber = async (subscriberId) => {
+    if (!confirm("Are you sure you want to delete this subscriber?")) return;
+    
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/newsletter/${subscriberId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminEmail: user?.email })
+      });
+
+      if (res.ok) {
+        setMessage("Subscriber deleted successfully");
+        refetchNewsletter();
+      } else {
+        const data = await res.json();
+        setMessage(data.error || "Failed to delete subscriber");
+      }
+    } catch (error) {
+      setMessage("Error deleting subscriber");
     } finally {
       setActionLoading(false);
     }
@@ -482,6 +507,7 @@ export default function AdminDashboard() {
                       <th className="px-4 py-2 text-left">Email</th>
                       <th className="px-4 py-2 text-left">Subscribed Date</th>
                       <th className="px-4 py-2 text-left">Status</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -493,6 +519,16 @@ export default function AdminDashboard() {
                           <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">
                             {subscriber.status}
                           </span>
+                        </td>
+                        <td className="px-4 py-2">
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            onClick={() => handleDeleteSubscriber(subscriber._id || subscriber.id)}
+                            disabled={actionLoading}
+                          >
+                            Delete
+                          </Button>
                         </td>
                       </tr>
                     ))}

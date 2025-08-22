@@ -5,18 +5,21 @@ import Link from "next/link";
 import Button from "@/app/Components/ui/Button";
 import Card from "@/app/Components/ui/Card";
 import LoadingSpinner from "@/app/Components/ui/LoadingSpinner";
-import Alert from "@/app/Components/ui/Alert";
 import Toast from "@/app/Components/ui/Toast";
+import AuthGuard from "@/app/Components/ui/AuthGuard";
+import PageContainer from "@/app/Components/ui/PageContainer";
 import { useAuth } from "@/hooks/useAuth";
 import { useFetch } from "@/hooks/useFetch";
+import { useMessage } from "@/hooks/useMessage";
+import { useApi } from "@/hooks/useApi";
 import { formatDate, generateInitials } from "@/lib/utils";
 
 
 export default function Profile() {
   const { user, updateUser } = useAuth();
   const { data: allPosts, loading, refetch } = useFetch("/api/posts");
-  const [actionLoading, setActionLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const { message, setMessage, showSuccess, showError } = useMessage();
+  const api = useApi();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: "",
@@ -41,25 +44,12 @@ export default function Profile() {
   const handleDeletePost = async (postId) => {
     if (!confirm("Are you sure you want to delete this post?")) return;
 
-    setActionLoading(true);
-    try {
-      const response = await fetch(`/api/posts/${postId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
-      });
-
-      if (response.ok) {
-        setMessage("Post deleted successfully");
-        refetch();
-      } else {
-        const error = await response.json();
-        setMessage(error.error || "Failed to delete post");
-      }
-    } catch (error) {
-      setMessage("Failed to delete post");
-    } finally {
-      setActionLoading(false);
+    const result = await api.del(`/api/posts/${postId}`, { userId: user.id });
+    if (result.success) {
+      showSuccess("Post deleted");
+      refetch();
+    } else {
+      showError(result.error);
     }
   };
 
@@ -67,84 +57,43 @@ export default function Profile() {
     if (!confirm("Are you sure you want to suspend/unsuspend this post?"))
       return;
 
-    setActionLoading(true);
-    try {
-      const response = await fetch(`/api/posts/${postId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          adminEmail: user.role === "admin" ? user.email : null,
-        }),
-      });
-
-      if (response.ok) {
-        setMessage("Post status updated successfully");
-        refetch();
-      } else {
-        const error = await response.json();
-        setMessage(error.error || "Failed to update post status");
-      }
-    } catch (error) {
-      setMessage("Failed to update post status");
-    } finally {
-      setActionLoading(false);
+    const result = await api.put(`/api/posts/${postId}`, {
+      adminEmail: user.role === "admin" ? user.email : null,
+    });
+    if (result.success) {
+      showSuccess("Post status updated");
+      refetch();
+    } else {
+      showError(result.error);
     }
   };
 
   const handleProfileUpdate = async () => {
-    setActionLoading(true);
-    try {
-      const response = await fetch("/api/users/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, ...profileData }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        updateUser(result.user);
-        setMessage("Profile updated successfully");
-        setIsEditing(false);
-      } else {
-        const error = await response.json();
-        setMessage(error.error || "Failed to update profile");
-      }
-    } catch (error) {
-      setMessage("Failed to update profile");
-    } finally {
-      setActionLoading(false);
+    const result = await api.put("/api/users/profile", { userId: user.id, ...profileData });
+    if (result.success) {
+      updateUser(result.data.user);
+      showSuccess("Profile updated");
+      setIsEditing(false);
+    } else {
+      showError(result.error);
     }
   };
 
   const handleCancelEdit = () => {
     setProfileData({
-      name: user.name || "",
-      profession: user.profession || "",
-      profilePic: user.profilePic || "",
+      name: user?.name || "",
+      profession: user?.profession || "",
+      profilePic: user?.profilePic || "",
     });
     setIsEditing(false);
   };
 
 
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Alert type="error" className="mb-4">
-            Please sign in to view your profile
-          </Alert>
-          <Button as={Link} href="/auth/signin">
-            Sign In
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-screen-xl mx-auto px-4 py-8">
-      <Card className="sm:p-6 mb-8">
+    <AuthGuard>
+      <PageContainer>
+        <Card className="sm:p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Profile</h1>
           {!isEditing ? (
@@ -160,15 +109,15 @@ export default function Profile() {
         </div>
         <div className="flex flex-wrap items-start gap-6">
           <div className="flex-shrink-0">
-            {(isEditing ? profileData.profilePic : user.profilePic) ? (
+            {(isEditing ? profileData.profilePic : user?.profilePic) ? (
               <img
-                src={isEditing ? profileData.profilePic : user.profilePic}
-                alt={user.name}
+                src={isEditing ? profileData.profilePic : user?.profilePic}
+                alt={user?.name || 'User'}
                 className="w-24 h-24 rounded-full object-cover border-4 border-blue-100"
               />
             ) : (
               <div className="w-24 h-24 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold">
-                {generateInitials(user.name)}
+                {generateInitials(user?.name)}
               </div>
             )}
           </div>
@@ -189,14 +138,14 @@ export default function Profile() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 ) : (
-                  <p className="text-lg font-semibold">{user.name}</p>
+                  <p className="text-lg font-semibold">{user?.name}</p>
                 )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 sm:mb-2">
                   Email
                 </label>
-                <p className="text-lg">{user.email}</p>
+                <p className="text-lg">{user?.email}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 sm:mb-2">
@@ -217,7 +166,7 @@ export default function Profile() {
                   />
                 ) : (
                   <p className="text-lg">
-                    {user.profession || "Not specified"}
+                    {user?.profession || "Not specified"}
                   </p>
                 )}
               </div>
@@ -225,7 +174,7 @@ export default function Profile() {
                 <label className="block text-sm font-medium text-gray-700 sm:mb-2">
                   Role
                 </label>
-                <p className="text-lg capitalize">{user.role}</p>
+                <p className="text-lg capitalize">{user?.role}</p>
               </div>
               {isEditing && (
                 <div className="md:col-span-2">
@@ -249,13 +198,9 @@ export default function Profile() {
             </div>
           </div>
         </div>
-      </Card>
+        </Card>
 
-
-      <Toast message={message} setMessage={setMessage} loading={actionLoading} />
-
-
-      <Card className="p-6">
+        <Card className="p-6">
         <div className="flex flex-wrap justify-between items-center mb-6 gap-2.5">
           <h2 className="text-2xl font-bold">My Posts ({userPosts.length})</h2>
           <div className="flex gap-2">
@@ -311,12 +256,12 @@ export default function Profile() {
                     <Button as={Link} href={`/post/${post._id}`} size="sm">
                       View
                     </Button>
-                    {user.role === "admin" && (
+                    {user?.role === "admin" && (
                       <Button
                         onClick={() => handleSuspendPost(post._id)}
                         size="sm"
                         variant="warning"
-                        disabled={actionLoading}
+                        disabled={api.loading}
                         className="flex items-center gap-1"
                       >
                         {post.status === "suspended" ? "Unsuspend" : "Suspend"}
@@ -326,7 +271,7 @@ export default function Profile() {
                       onClick={() => handleDeletePost(post._id)}
                       size="sm"
                       variant="danger"
-                      disabled={actionLoading}
+                      disabled={api.loading}
                       className="flex items-center gap-1"
                     >
                       Delete
@@ -337,7 +282,9 @@ export default function Profile() {
             ))}
           </div>
         )}
-      </Card>
-    </div>
+        </Card>
+        <Toast message={message} setMessage={setMessage} loading={api.loading} />
+      </PageContainer>
+    </AuthGuard>
   );
 }

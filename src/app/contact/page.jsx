@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { FaEnvelope, FaPhone, FaMapMarkerAlt } from "react-icons/fa";
 import Toast from "@/app/Components/ui/Toast";
+import PageContainer from "@/app/Components/ui/PageContainer";
+import { useMessage } from "@/hooks/useMessage";
+import { useApi } from "@/hooks/useApi";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -11,9 +14,9 @@ export default function Contact() {
     subject: "",
     message: ""
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState("");
   const [errors, setErrors] = useState({});
+  const { message, setMessage, showSuccess, showError } = useMessage(5000);
+  const api = useApi();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -66,37 +69,20 @@ export default function Contact() {
       return;
     }
     
-    setIsSubmitting(true);
     setErrors({});
     
-    try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      
-      if (res.ok) {
-        setSubmitMessage("✅ Thank you for your message! We'll get back to you within 24 hours.");
-        setFormData({ name: "", email: "", subject: "", message: "" });
-        
-
-      } else {
-        const data = await res.json();
-        setSubmitMessage("❌ Failed to send message. Please try again.");
-      }
-    } catch (error) {
-      console.error('Contact form error:', error);
-      setSubmitMessage("❌ Failed to send message. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    const result = await api.post('/api/contact', formData);
+    
+    if (result.success) {
+      showSuccess("✅ Thank you for your message! We'll get back to you within 24 hours.");
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } else {
+      showError("❌ Failed to send message. Please try again.");
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
+    <PageContainer maxWidth="max-w-6xl" padding="px-4 py-12">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
         <p className="text-xl text-gray-600">
@@ -201,10 +187,10 @@ export default function Contact() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={api.loading}
               className="w-full bg-blue-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              {isSubmitting ? "Sending..." : "Send Message"}
+              {api.loading ? "Sending..." : "Send Message"}
             </button>
           </form>
         </div>
@@ -262,7 +248,7 @@ export default function Contact() {
           </div>
         </div>
       </div>
-      <Toast message={submitMessage} setMessage={setSubmitMessage} loading={isSubmitting} duration={5000} />
-    </div>
+      <Toast message={message} setMessage={setMessage} loading={api.loading} duration={5000} />
+    </PageContainer>
   );
 }
