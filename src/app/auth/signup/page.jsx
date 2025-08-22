@@ -12,6 +12,7 @@ import { useMessage } from "@/hooks/useMessage";
 import { useApi } from "@/hooks/useApi";
 
 export default function SignUp() {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
