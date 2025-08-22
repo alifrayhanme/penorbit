@@ -54,10 +54,10 @@ function SearchResults() {
       ) : (
         <div className="space-y-6">
           {filteredPosts.map((post) => (
-            <Card key={post.id} hover className="p-6">
+            <Card key={post._id} hover className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
-                  <Link href={`/post/${post.id}`}>
+                  <Link href={`/post/${post._id}`}>
                     <h2 className="text-xl font-semibold mb-2 hover:text-blue-600 cursor-pointer">
                       {post.title}
                     </h2>
@@ -78,7 +78,7 @@ function SearchResults() {
                   </div>
                 </div>
               </div>
-              <Button as={Link} href={`/post/${post.id}`}>Read More</Button>
+              <Button as={Link} href={`/post/${post._id}`}>Read More</Button>
             </Card>
           ))}
         </div>

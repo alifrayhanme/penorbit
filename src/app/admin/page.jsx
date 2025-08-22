@@ -34,6 +34,10 @@ export default function AdminDashboard() {
 
 
   const handleUserStatusChange = async (userId, newStatus) => {
+    if (!userId) {
+      setMessage("Invalid user ID");
+      return;
+    }
     setActionLoading(true);
     try {
       const res = await fetch(`/api/users/${userId}`, {
@@ -59,6 +63,10 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteUser = async (userId) => {
+    if (!userId) {
+      setMessage("Invalid user ID");
+      return;
+    }
     if (!confirm("Are you sure you want to delete this user?")) return;
 
     setActionLoading(true);
@@ -293,14 +301,14 @@ export default function AdminDashboard() {
           </div>
         )}
         
-        <div className="flex space-x-4 mb-6">
+        <div className="flex flex-wrap gap-4  mb-6">
           {[
             { id: 'overview', label: 'Overview' },
             { id: 'users', label: 'Users' },
             { id: 'posts', label: 'Posts' },
             { id: 'comments', label: 'Comments' },
             { id: 'newsletter', label: 'Newsletter' },
-            { id: 'contacts', label: `Messages ${(contacts || []).filter(c => c?.status === 'unread').length > 0 ? `(${(contacts || []).filter(c => c?.status === 'unread').length})` : ''}` },
+            { id: 'contacts', label: `Messages ${contacts && contacts.filter(c => c?.status === 'unread').length > 0 ? `(${contacts.filter(c => c?.status === 'unread').length})` : ''}` },
           ].map(tab => (
             <button
               key={tab.id}
@@ -323,10 +331,10 @@ export default function AdminDashboard() {
         {!loading && activeTab === 'overview' && (
           <div className="grid md:grid-cols-4 gap-4">
             {[
-              { title: 'Total Users', value: users.length, color: 'blue' },
-              { title: 'Total Posts', value: posts.length, color: 'green' },
-              { title: 'Total Comments', value: posts.reduce((total, post) => total + (post.comments?.length || 0), 0), color: 'purple' },
-              { title: 'Newsletter Subscribers', value: subscribers.length, color: 'orange' },
+              { title: 'Total Users', value: users?.length || 0, color: 'blue' },
+              { title: 'Total Posts', value: posts?.length || 0, color: 'green' },
+              { title: 'Total Comments', value: posts?.reduce((total, post) => total + (post.comments?.length || 0), 0) || 0, color: 'purple' },
+              { title: 'Newsletter Subscribers', value: subscribers?.length || 0, color: 'orange' },
             ].map((stat, index) => {
               const colorClasses = {
                 blue: 'bg-blue-100 text-blue-800',
@@ -335,7 +343,7 @@ export default function AdminDashboard() {
                 orange: 'bg-orange-100 text-orange-800',
               };
               return (
-                <div key={index} className={`${colorClasses[stat.color].split(' ')[0]} p-4 rounded-lg`}>
+                <div key={`stat-${stat.title}-${index}`} className={`${colorClasses[stat.color].split(' ')[0]} p-4 rounded-lg`}>
                   <h3 className={`font-semibold ${colorClasses[stat.color].split(' ')[1]}`}>
                     {stat.title}
                   </h3>
@@ -352,7 +360,7 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <h2 className="text-2xl font-bold mb-6">User Management</h2>
             
-            {users.length === 0 ? (
+            {!users || users.length === 0 ? (
               <p className="text-gray-600">No users found.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -367,8 +375,8 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((u) => (
-                      <tr key={u._id || u.id} className="border-t">
+                    {users && users.map((u, index) => (
+                      <tr key={u.id || u._id || `user-${index}`} className="border-t">
                         <td className="px-4 py-2">{u.name}</td>
                         <td className="px-4 py-2">{u.email}</td>
                         <td className="px-4 py-2">
@@ -387,7 +395,7 @@ export default function AdminDashboard() {
                               <Button
                                 size="sm"
                                 variant={u.status === 'active' ? 'danger' : 'success'}
-                                onClick={() => handleUserStatusChange(u.id, u.status === 'active' ? 'suspended' : 'active')}
+                                onClick={() => handleUserStatusChange(u.id || u._id, u.status === 'active' ? 'suspended' : 'active')}
                                 disabled={actionLoading}
                               >
                                 {u.status === 'active' ? 'Suspend' : 'Activate'}
@@ -395,7 +403,7 @@ export default function AdminDashboard() {
                               <Button
                                 size="sm"
                                 variant="danger"
-                                onClick={() => handleDeleteUser(u.id)}
+                                onClick={() => handleDeleteUser(u.id || u._id)}
                                 disabled={actionLoading}
                               >
                                 Delete
@@ -423,15 +431,15 @@ export default function AdminDashboard() {
                 posts
                   .filter(post => post.comments && post.comments.length > 0)
                   .map((post) => (
-                    <div key={`post-${post._id || post.id}`} className="border rounded-lg p-4">
+                    <div key={`post-${post._id}`} className="border rounded-lg p-4">
                       <h3 className="font-semibold mb-3">
-                        Comments on: <Link href={`/post/${post.id}`} className="text-blue-600 hover:underline">{post.title}</Link>
+                        Comments on: <Link href={`/post/${post._id}`} className="text-blue-600 hover:underline">{post.title}</Link>
                       </h3>
                       <div className="space-y-2">
                         {post.comments
                           .filter(comment => comment && comment.id)
                           .map((comment) => (
-                            <div key={`comment-${post._id || post.id}-${comment.id}`} className={`p-3 rounded border-l-4 ${
+                            <div key={`comment-${post._id}-${comment.id}`} className={`p-3 rounded border-l-4 ${
                               comment.status === 'suspended' ? 'border-red-500 bg-red-50' : 'border-green-500 bg-green-50'
                             }`}>
                               <div className="flex justify-between items-start">
@@ -451,7 +459,7 @@ export default function AdminDashboard() {
                                   <Button
                                     size="sm"
                                     variant={comment.status === 'suspended' ? 'success' : 'danger'}
-                                    onClick={() => handleSuspendComment(post.id, comment.id)}
+                                    onClick={() => handleSuspendComment(post._id, comment.id)}
                                     disabled={actionLoading}
                                   >
                                     {comment.status === 'suspended' ? 'Activate' : 'Suspend'}
@@ -459,7 +467,7 @@ export default function AdminDashboard() {
                                   <Button
                                     size="sm"
                                     variant="danger"
-                                    onClick={() => handleDeleteComment(post.id, comment.id)}
+                                    onClick={() => handleDeleteComment(post._id, comment.id)}
                                     disabled={actionLoading}
                                   >
                                     Delete
@@ -484,7 +492,7 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <h2 className="text-2xl font-bold mb-6">Newsletter Subscribers ({subscribers.length})</h2>
             
-            {subscribers.length === 0 ? (
+            {!subscribers || subscribers.length === 0 ? (
               <p className="text-gray-600">No subscribers yet.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -497,8 +505,8 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {subscribers.map((subscriber) => (
-                      <tr key={subscriber._id || subscriber.id} className="border-t">
+                    {subscribers && subscribers.map((subscriber, index) => (
+                      <tr key={subscriber._id || `subscriber-${index}`} className="border-t">
                         <td className="px-4 py-2">{subscriber.email}</td>
                         <td className="px-4 py-2">{formatDate(subscriber.subscribedAt)}</td>
                         <td className="px-4 py-2">
@@ -519,12 +527,12 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <h2 className="text-2xl font-bold mb-6">Contact Messages ({contacts.length})</h2>
             
-            {contacts.length === 0 ? (
+            {!contacts || contacts.length === 0 ? (
               <p className="text-gray-600">No messages yet.</p>
             ) : (
               <div className="space-y-4">
-                {contacts.map((contact) => (
-                  <div key={contact._id || contact.id} className={`border rounded-lg p-4 ${
+                {contacts && contacts.map((contact) => (
+                  <div key={contact._id} className={`border rounded-lg p-4 ${
                     contact.status === 'unread' ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'
                   }`}>
                     <div className="flex justify-between items-start mb-3">
@@ -552,7 +560,7 @@ export default function AdminDashboard() {
                       <Button
                         size="sm"
                         variant={contact.status === 'unread' ? 'success' : 'primary'}
-                        onClick={() => handleUpdateContactStatus(contact.id, contact.status === 'unread' ? 'read' : 'unread')}
+                        onClick={() => handleUpdateContactStatus(contact._id, contact.status === 'unread' ? 'read' : 'unread')}
                         disabled={actionLoading}
                       >
                         Mark as {contact.status === 'unread' ? 'Read' : 'Unread'}
@@ -560,7 +568,7 @@ export default function AdminDashboard() {
                       <Button
                         size="sm"
                         variant="danger"
-                        onClick={() => handleDeleteContact(contact.id)}
+                        onClick={() => handleDeleteContact(contact._id)}
                         disabled={actionLoading}
                       >
                         Delete
@@ -585,7 +593,7 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <h2 className="text-2xl font-bold mb-6">Post Management</h2>
             
-            {posts.length === 0 ? (
+            {!posts || posts.length === 0 ? (
               <p className="text-gray-600">No posts found.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -602,10 +610,10 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {posts.map((post) => (
-                      <tr key={post._id || post.id} className="border-t">
+                    {posts && posts.map((post) => (
+                      <tr key={post._id} className="border-t">
                         <td className="px-4 py-2">
-                          <Link href={`/post/${post.id}`} className="text-blue-600 hover:underline">
+                          <Link href={`/post/${post._id}`} className="text-blue-600 hover:underline">
                             {post.title}
                           </Link>
                         </td>
@@ -625,7 +633,7 @@ export default function AdminDashboard() {
                             <Button
                               size="sm"
                               variant={post.status === 'suspended' ? 'success' : 'danger'}
-                              onClick={() => handleSuspendPost(post.id)}
+                              onClick={() => handleSuspendPost(post._id)}
                               disabled={actionLoading}
                             >
                               {post.status === 'suspended' ? 'Activate' : 'Suspend'}
@@ -633,7 +641,7 @@ export default function AdminDashboard() {
                             <Button
                               size="sm"
                               variant="danger"
-                              onClick={() => handleDeletePost(post.id)}
+                              onClick={() => handleDeletePost(post._id)}
                               disabled={actionLoading}
                             >
                               Delete

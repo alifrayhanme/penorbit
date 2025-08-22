@@ -35,7 +35,10 @@ const PostPage = ({ params }) => {
 
   useEffect(() => {
     const fetchPost = async () => {
-      if (!postId) return;
+      if (!postId || postId === 'undefined') {
+        setLoading(false);
+        return;
+      }
       
       try {
         const res = await fetch(`/api/posts/${postId}`);

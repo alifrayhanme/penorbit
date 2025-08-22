@@ -45,7 +45,7 @@ const LatestPosts = () => {
         <h2 className="text-3xl font-bold text-center mb-8">Latest Posts</h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {latestPosts.map((post) => (
-            <Card key={post.id} hover>
+            <Card key={post._id} hover>
               <img 
                 src={getValidImageUrl(post.bannerImage)} 
                 alt={post.title}
@@ -61,7 +61,7 @@ const LatestPosts = () => {
                   </span>
                 </div>
                 <h3 className="text-xl font-semibold mb-2 line-clamp-2">
-                  <Link href={`/post/${post.id}`} className="hover:text-blue-600">
+                  <Link href={`/post/${post._id}`} className="hover:text-blue-600">
                     {post.title}
                   </Link>
                 </h3>
@@ -69,7 +69,7 @@ const LatestPosts = () => {
                 <div className="flex items-center justify-between">
                   <AuthorProfile author={post.author} size="sm" />
                   <Link 
-                    href={`/post/${post.id}`}
+                    href={`/post/${post._id}`}
                     className="text-blue-600 hover:text-blue-700 font-medium text-sm"
                   >
                     Read More →

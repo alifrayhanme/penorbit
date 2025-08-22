@@ -148,7 +148,7 @@ export default function Profile() {
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8">
-      <Card className="p-6 mb-8">
+      <Card className="sm:p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Profile</h1>
           {!isEditing ? (
@@ -180,7 +180,7 @@ export default function Profile() {
           <div className="flex-1">
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 sm:mb-2">
                   Name
                 </label>
                 {isEditing ? (
@@ -197,13 +197,13 @@ export default function Profile() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 sm:mb-2">
                   Email
                 </label>
                 <p className="text-lg">{user.email}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 sm:mb-2">
                   Profession
                 </label>
                 {isEditing ? (
@@ -226,14 +226,14 @@ export default function Profile() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 sm:mb-2">
                   Role
                 </label>
                 <p className="text-lg capitalize">{user.role}</p>
               </div>
               {isEditing && (
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 sm:mb-2">
                     Profile Picture URL
                   </label>
                   <input
@@ -317,7 +317,7 @@ export default function Profile() {
         ) : (
           <div className="space-y-4">
             {userPosts.map((post) => (
-              <Card key={post.id} hover className="p-4 border">
+              <Card key={post._id} hover className="p-4 border">
                 <div className="flex flex-wrap justify-between items-start gap-5">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -336,12 +336,12 @@ export default function Profile() {
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5 sm:gap-2">
-                    <Button as={Link} href={`/post/${post.id}`} size="sm">
+                    <Button as={Link} href={`/post/${post._id}`} size="sm">
                       View
                     </Button>
                     {user.role === "admin" && (
                       <Button
-                        onClick={() => handleSuspendPost(post.id)}
+                        onClick={() => handleSuspendPost(post._id)}
                         size="sm"
                         variant="warning"
                         disabled={actionLoading}
@@ -351,7 +351,7 @@ export default function Profile() {
                       </Button>
                     )}
                     <Button
-                      onClick={() => handleDeletePost(post.id)}
+                      onClick={() => handleDeletePost(post._id)}
                       size="sm"
                       variant="danger"
                       disabled={actionLoading}

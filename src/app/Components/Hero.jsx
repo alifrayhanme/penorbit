@@ -47,7 +47,7 @@ const Hero = () => {
         {posts.map((post, index) => {
           return (
             <div
-              key={post.id}
+              key={post._id}
               className="w-full h-full flex-shrink-0 relative bg-white"
             >
               <div className="relative z-10 h-full grid grid-cols-1 sm:grid-cols-2 items-center gap-5">
@@ -59,6 +59,7 @@ const Hero = () => {
                         src={post.bannerImage}
                         alt={post.title}
                         fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
                         className="object-cover rounded-lg"
                         priority={index === 0}
                       />
@@ -80,7 +81,7 @@ const Hero = () => {
                   </p>
                   <Button 
                     as={Link} 
-                    href={`/post/${post.id}`}
+                    href={`/post/${post._id}`}
                     size="lg"
                     className="rounded-full shadow-lg"
                   >
@@ -97,7 +98,7 @@ const Hero = () => {
       <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-3">
         {posts.map((_, index) => (
           <button
-            key={index}
+            key={`dot-${index}`}
             onClick={() => setCurrentSlide(index)}
             className={`w-3 h-3 rounded-full transition-all duration-300 ${
               index === currentSlide 
