@@ -5,7 +5,7 @@ const Card = ({
 }) => {
   
   return (
-    <div className={`bg-white rounded-lg  overflow-hidden transition ${className}`}>
+    <div className={`bg-white rounded-lg shadow-md hover:shadow-lg overflow-hidden transition-shadow duration-300 ${className}`}>
       {children}
     </div>
   );

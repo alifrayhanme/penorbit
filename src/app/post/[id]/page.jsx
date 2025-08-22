@@ -145,8 +145,8 @@ const PostPage = ({ params }) => {
       <CategoryDate category={post.category || "General"} date={new Date(post.createdAt).toLocaleDateString()} />
 
       <div className="prose prose-lg max-w-none text-gray-700 mt-6">
-        <p>{post.summary}</p>
-        <p>{post.details}</p>
+        <div className="whitespace-pre-wrap">{post.summary}</div>
+        <div className="whitespace-pre-wrap mt-4">{post.details}</div>
       </div>
 
 

@@ -107,38 +107,67 @@ export default function AddPost() {
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <Input
-          label="Post Title"
-          placeholder="Post title"
-          value={formData.title}
-          onChange={handleChange('title')}
-        />
+        <div>
+          <Input
+            label="Post Title"
+            placeholder="Post title"
+            value={formData.title}
+            onChange={handleChange('title')}
+            maxLength={100}
+          />
+          <div className="text-right text-sm text-gray-500 mt-1">
+            {formData.title.length}/100
+          </div>
+        </div>
+        
         <Input
           label="Banner Image URL *"
           placeholder="Banner image URL (Required)"
           value={formData.bannerImage}
           onChange={handleChange('bannerImage')}
+          maxLength={500}
         />
-        <Input
-          label="Category"
-          placeholder="Post category"
-          value={formData.category}
-          onChange={handleChange('category')}
-        />
-        <TextArea
-          label="Summary"
-          placeholder="Write a short summary..."
-          value={formData.summary}
-          onChange={handleChange('summary')}
-          height="h-24"
-        />
-        <TextArea
-          label="Details"
-          placeholder="Write the full details..."
-          value={formData.details}
-          onChange={handleChange('details')}
-          height="h-40"
-        />
+        
+        <div>
+          <Input
+            label="Category"
+            placeholder="Post category"
+            value={formData.category}
+            onChange={handleChange('category')}
+            maxLength={50}
+          />
+          <div className="text-right text-sm text-gray-500 mt-1">
+            {formData.category.length}/50
+          </div>
+        </div>
+        
+        <div>
+          <TextArea
+            label="Summary"
+            placeholder="Write a short summary..."
+            value={formData.summary}
+            onChange={handleChange('summary')}
+            height="h-24"
+            maxLength={300}
+          />
+          <div className="text-right text-sm text-gray-500 mt-1">
+            {formData.summary.length}/300
+          </div>
+        </div>
+        
+        <div>
+          <TextArea
+            label="Details"
+            placeholder="Write the full details..."
+            value={formData.details}
+            onChange={handleChange('details')}
+            height="h-40"
+            maxLength={5000}
+          />
+          <div className="text-right text-sm text-gray-500 mt-1">
+            {formData.details.length}/5000
+          </div>
+        </div>
 
         <Button
           type="submit"

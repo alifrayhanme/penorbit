@@ -1,25 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Button from "./ui/Button";
 import { useFetch } from '@/hooks/useFetch';
-import { isValidImageUrl } from '@/lib/utils';
+import { isValidImageUrl, formatDate } from '@/lib/utils';
 
 const Hero = () => {
   const { data: allPosts } = useFetch('/api/posts');
   const posts = (allPosts || []).slice(0, 3);
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  useEffect(() => {
-    if (posts.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % posts.length);
-      }, 5000); // Auto-slide every 5 seconds
-      return () => clearInterval(interval);
-    }
-  }, [posts.length]);
 
   if (posts.length === 0) {
     return (
@@ -37,76 +26,102 @@ const Hero = () => {
     );
   }
 
+  const [mainPost, ...sidePosts] = posts;
+
   return (
-    <div className="relative  overflow-hidden max-w-screen-xl mx-auto px-4 py-10">
-      {/* Carousel Slides */}
-      <div
-        className="flex transition-transform duration-500 ease-in-out h-full"
-        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-      >
-        {posts.map((post, index) => {
-          return (
-            <div
-              key={post._id}
-              className="w-full h-full flex-shrink-0 relative bg-white"
-            >
-              <div className="relative z-10 h-full grid grid-cols-1 sm:grid-cols-2 items-center gap-5">
-                {/* Left Side - Image */}
-                <div className="w-full">
-                  {isValidImageUrl(post.bannerImage) ? (
-                    <div className="relative w-full h-96">
-                      <Image
-                        src={post.bannerImage}
-                        alt={post.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                        className="object-cover rounded-lg"
-                        priority={index === 0}
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full h-96 bg-gray-200 flex items-center justify-center rounded-lg">
-                      <span className="text-gray-500 text-lg">No Image</span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Right Side - Content */}
-                <div className="sm:h-96 text-gray-800">
-                  <h1 className="text-3xl lg:text-5xl font-bold mb-6 leading-tight text-gray-900">
-                    {post.title}
-                  </h1>
-                  <p className="text-lg mb-8 leading-relaxed text-gray-600">
-                    {post.summary}
+    <div className="max-w-screen-xl mx-auto px-4 py-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-auto lg:h-[500px]">
+        {/* Left Side - Main Featured Post */}
+        {mainPost && (
+          <div className="relative group cursor-pointer overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <Link href={`/post/${mainPost._id}`}>
+              <div className="relative h-64 lg:h-full">
+                {isValidImageUrl(mainPost.bannerImage) ? (
+                  <Image
+                    src={mainPost.bannerImage}
+                    alt={mainPost.title}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    priority
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-500 text-lg">No Image</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <div className="mb-2">
+                    <span className="bg-blue-600 px-3 py-1 rounded-full text-sm font-medium">
+                      {mainPost.category || 'Featured'}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl lg:text-3xl font-bold mb-3 line-clamp-2">
+                    {mainPost.title}
+                  </h3>
+                  <p className="text-gray-200 mb-3 line-clamp-2">
+                    {mainPost.summary}
                   </p>
-                  <Button 
-                    as={Link} 
-                    href={`/post/${post._id}`}
-                    size="lg"
-                    className="rounded-full shadow-lg"
-                  >
-                    Read More
-                  </Button>
+                  <div className="flex items-center text-sm text-gray-300">
+                    <span>{mainPost.author?.name || 'Anonymous'}</span>
+                    <span className="mx-2">•</span>
+                    <span>{formatDate(mainPost.createdAt)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            </Link>
+          </div>
+        )}
 
-      {/* Dots Indicator */}
-      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-3">
-        {posts.map((_, index) => (
-          <button
-            key={`dot-${index}`}
-            onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              index === currentSlide 
-                ? "bg-blue-600 scale-110" 
-                : "bg-gray-400 hover:bg-gray-500"
-            }`}
-          />
-        ))}
+        {/* Right Side - Two Smaller Posts */}
+        <div className="flex flex-col h-full gap-4">
+          {sidePosts.map((post, index) => (
+            <div key={post._id} className="group cursor-pointer flex-1">
+              <Link href={`/post/${post._id}`}>
+                <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden h-full">
+                  <div className="flex sm:flex-row flex-col h-full">
+                    <div className="sm:w-2/5 w-full sm:h-full h-32 relative">
+                      {isValidImageUrl(post.bannerImage) ? (
+                        <Image
+                          src={post.bannerImage}
+                          alt={post.title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, 40vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400 text-sm">No Image</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="sm:w-3/5 w-full p-4 flex flex-col justify-between">
+                      <div>
+                        <div className="mb-2">
+                          <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium">
+                            {post.category || 'Article'}
+                          </span>
+                        </div>
+                        <h4 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                          {post.title}
+                        </h4>
+                        <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+                          {post.summary}
+                        </p>
+                      </div>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <span>{post.author?.name || 'Anonymous'}</span>
+                        <span className="mx-2">•</span>
+                        <span>{formatDate(post.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
