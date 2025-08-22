@@ -6,6 +6,7 @@ import Button from "@/app/Components/ui/Button";
 import Card from "@/app/Components/ui/Card";
 import LoadingSpinner from "@/app/Components/ui/LoadingSpinner";
 import Alert from "@/app/Components/ui/Alert";
+import Toast from "@/app/Components/ui/Toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useFetch } from "@/hooks/useFetch";
 import { formatDate, generateInitials } from "@/lib/utils";
@@ -124,12 +125,7 @@ export default function Profile() {
     setIsEditing(false);
   };
 
-  useEffect(() => {
-    if (message) {
-      const timer = setTimeout(() => setMessage(""), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
+
 
   if (!user) {
     return (
@@ -256,31 +252,7 @@ export default function Profile() {
       </Card>
 
 
-      <div className="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-50">
-        {message && (
-          <Alert
-            type={
-              message.includes("success") || message.includes("deleted")
-                ? "success"
-                : "error"
-            }
-            className="mb-4 shadow-lg rounded-lg"
-          >
-            {message}
-          </Alert>
-        )}
-      </div>
-
-      <div className="fixed bottom-1/2 left-1/2 transform -translate-x-1/2 z-50">
-        {actionLoading && (
-          <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded">
-            <div className="flex items-center gap-2">
-              <LoadingSpinner size="sm" />
-              <span className="text-blue-700">Processing...</span>
-            </div>
-          </div>
-        )}
-      </div>
+      <Toast message={message} setMessage={setMessage} loading={actionLoading} />
 
 
       <Card className="p-6">

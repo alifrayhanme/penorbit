@@ -5,6 +5,8 @@ import Input from "@/app/Components/ui/Input";
 import TextArea from "@/app/Components/ui/TextArea";
 import Button from "@/app/Components/ui/Button";
 import Alert from "@/app/Components/ui/Alert";
+import FormField from "@/app/Components/ui/FormField";
+import Toast from "@/app/Components/ui/Toast";
 import { useAuth } from '@/hooks/useAuth';
 import { isValidImageUrl } from '@/lib/utils';
 
@@ -97,17 +99,10 @@ export default function AddPost() {
         Create a New Post
       </h1>
 
-      {message && (
-        <Alert 
-          type={message.includes("success") ? "success" : "error"}
-          className="mb-4 text-center"
-        >
-          {message}
-        </Alert>
-      )}
+
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <div>
+        <FormField showCounter currentLength={formData.title.length} maxLength={100}>
           <Input
             label="Post Title"
             placeholder="Post title"
@@ -115,10 +110,7 @@ export default function AddPost() {
             onChange={handleChange('title')}
             maxLength={100}
           />
-          <div className="text-right text-sm text-gray-500 mt-1">
-            {formData.title.length}/100
-          </div>
-        </div>
+        </FormField>
         
         <Input
           label="Banner Image URL *"
@@ -128,7 +120,7 @@ export default function AddPost() {
           maxLength={500}
         />
         
-        <div>
+        <FormField showCounter currentLength={formData.category.length} maxLength={50}>
           <Input
             label="Category"
             placeholder="Post category"
@@ -136,12 +128,9 @@ export default function AddPost() {
             onChange={handleChange('category')}
             maxLength={50}
           />
-          <div className="text-right text-sm text-gray-500 mt-1">
-            {formData.category.length}/50
-          </div>
-        </div>
+        </FormField>
         
-        <div>
+        <FormField showCounter currentLength={formData.summary.length} maxLength={300}>
           <TextArea
             label="Summary"
             placeholder="Write a short summary..."
@@ -150,12 +139,9 @@ export default function AddPost() {
             height="h-24"
             maxLength={300}
           />
-          <div className="text-right text-sm text-gray-500 mt-1">
-            {formData.summary.length}/300
-          </div>
-        </div>
+        </FormField>
         
-        <div>
+        <FormField showCounter currentLength={formData.details.length} maxLength={5000}>
           <TextArea
             label="Details"
             placeholder="Write the full details..."
@@ -164,10 +150,7 @@ export default function AddPost() {
             height="h-40"
             maxLength={5000}
           />
-          <div className="text-right text-sm text-gray-500 mt-1">
-            {formData.details.length}/5000
-          </div>
-        </div>
+        </FormField>
 
         <Button
           type="submit"
@@ -178,6 +161,7 @@ export default function AddPost() {
           Publish Post
         </Button>
       </form>
+      <Toast message={message} setMessage={setMessage} loading={loading} />
     </div>
   );
 }

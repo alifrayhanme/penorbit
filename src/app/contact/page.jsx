@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FaEnvelope, FaPhone, FaMapMarkerAlt } from "react-icons/fa";
+import Toast from "@/app/Components/ui/Toast";
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -81,10 +82,7 @@ export default function Contact() {
         setSubmitMessage("✅ Thank you for your message! We'll get back to you within 24 hours.");
         setFormData({ name: "", email: "", subject: "", message: "" });
         
-        // Clear success message after 5 seconds
-        setTimeout(() => {
-          setSubmitMessage("");
-        }, 5000);
+
       } else {
         const data = await res.json();
         setSubmitMessage("❌ Failed to send message. Please try again.");
@@ -111,11 +109,7 @@ export default function Contact() {
         <div className="bg-white rounded-lg shadow-md p-8">
           <h2 className="text-2xl font-bold mb-6">Send us a Message</h2>
           
-          {submitMessage && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-              {submitMessage}
-            </div>
-          )}
+
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -268,6 +262,7 @@ export default function Contact() {
           </div>
         </div>
       </div>
+      <Toast message={submitMessage} setMessage={setSubmitMessage} loading={isSubmitting} duration={5000} />
     </div>
   );
 }

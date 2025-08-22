@@ -7,6 +7,7 @@ import Link from "next/link";
 import Input from "@/app/Components/ui/Input";
 import Button from "@/app/Components/ui/Button";
 import Alert from "@/app/Components/ui/Alert";
+import Toast from "@/app/Components/ui/Toast";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -164,6 +165,7 @@ export default function SignUp() {
           </div>
         </form>
       </div>
+      <Toast message={error || success} setMessage={error ? setError : setSuccess} position="top-center" />
     </div>
   );
 }

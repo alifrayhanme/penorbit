@@ -7,6 +7,7 @@ import Link from "next/link";
 import Input from "@/app/Components/ui/Input";
 import Button from "@/app/Components/ui/Button";
 import Alert from "@/app/Components/ui/Alert";
+import Toast from "@/app/Components/ui/Toast";
 import { validateEmail, validatePassword } from '@/lib/utils';
 
 export default function SignIn() {
@@ -95,6 +96,7 @@ export default function SignIn() {
           </div>
         </form>
       </div>
+      <Toast message={error} setMessage={setError} position="top-center" />
     </div>
   );
 }
