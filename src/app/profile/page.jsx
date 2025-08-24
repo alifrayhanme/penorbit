@@ -256,6 +256,9 @@ export default function Profile() {
                     <Button as={Link} href={`/post/${post._id}`} size="sm">
                       View
                     </Button>
+                    <Button as={Link} href={`/edit/${post._id}`} size="sm" variant="secondary">
+                      Edit
+                    </Button>
                     {user?.role === "admin" && (
                       <Button
                         onClick={() => handleSuspendPost(post._id)}

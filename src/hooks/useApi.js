@@ -19,7 +19,8 @@ export const useApi = () => {
   const get = (url) => request(url);
   const post = (url, data) => request(url, { method: 'POST', body: JSON.stringify(data) });
   const put = (url, data) => request(url, { method: 'PUT', body: JSON.stringify(data) });
+  const patch = (url, data) => request(url, { method: 'PATCH', body: JSON.stringify(data) });
   const del = (url, data) => request(url, { method: 'DELETE', body: JSON.stringify(data) });
 
-  return { request, get, post, put, del, loading };
+  return { request, get, post, put, patch, del, loading };
 };

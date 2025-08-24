@@ -82,3 +82,44 @@ export async function PUT(request, { params }) {
     return Response.json({ error: 'Failed to update post' }, { status: 500 });
   }
 }
+
+export async function PATCH(request, { params }) {
+  try {
+    const { id } = await params;
+    
+    if (!id || isNaN(parseInt(id))) {
+      return Response.json({ error: 'Invalid post ID' }, { status: 400 });
+    }
+    
+    const body = await request.json();
+    const { userId, title, bannerImage, category, summary, details } = body;
+    
+    // Get the post to check ownership
+    const post = await db.getPostById(id);
+    if (!post) {
+      return Response.json({ error: 'Post not found' }, { status: 404 });
+    }
+    
+    // Check if requester is the post owner
+    if (!userId || post.authorId.toString() !== userId.toString()) {
+      return Response.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const updatedPost = await db.updatePost(id, {
+      title,
+      bannerImage,
+      category,
+      summary,
+      details,
+      updatedAt: new Date().toISOString()
+    });
+    
+    if (!updatedPost) {
+      return Response.json({ error: 'Failed to update post' }, { status: 500 });
+    }
+    
+    return Response.json({ message: 'Post updated successfully', post: updatedPost });
+  } catch (error) {
+    return Response.json({ error: 'Failed to update post' }, { status: 500 });
+  }
+}

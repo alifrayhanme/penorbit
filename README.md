@@ -8,10 +8,11 @@ A simple blog website built with Next.js where users can read, write, and share 
 - Write new posts
 - User authentication (sign in/up)
 - Like and comment on posts
-- Admin dashboard
+- Admin dashboard with global loading states
 - Newsletter subscription
 - Contact form
 - Search posts
+- Real-time processing indicators
 
 ## Getting Started
 
@@ -31,6 +32,16 @@ npm run dev
 
 - Email: `admin@penorbit.com`
 - Password: `123456`
+
+## Admin Dashboard Features
+
+- User management (suspend/activate/delete)
+- Post management (suspend/activate/delete)
+- Comment moderation
+- Newsletter subscriber management
+- Contact message handling
+- Global loading states for all operations
+- Processing indicators during updates
 
 ## Tech Stack
 

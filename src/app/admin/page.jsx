@@ -7,6 +7,7 @@ import Card from "@/app/Components/ui/Card";
 import LoadingSpinner from "@/app/Components/ui/LoadingSpinner";
 import Alert from "@/app/Components/ui/Alert";
 import Toast from "@/app/Components/ui/Toast";
+import Input from "@/app/Components/ui/Input";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useFetch } from "@/hooks/useFetch";
@@ -21,6 +22,10 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({ name: '', email: '', profession: '', role: '' });
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'user' });
   
   const subscribers = newsletterData?.subscribers || [];
 
@@ -88,6 +93,92 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    setEditForm({
+      name: user.name || '',
+      email: user.email || '',
+      profession: user.profession || '',
+      role: user.role || 'user'
+    });
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/users/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          userId: editingUser._id || editingUser.id,
+          ...editForm,
+          adminEmail: user?.email
+        })
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) {
+        setMessage("User updated successfully");
+        setEditingUser(null);
+        await refetchUsers();
+      } else {
+        setMessage(data.error || "Failed to update user");
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+      setMessage("Error updating user");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUser(null);
+    setEditForm({ name: '', email: '', profession: '', role: '' });
+  };
+
+  const handleCreateUser = async () => {
+    if (!createForm.name || !createForm.email || !createForm.password) {
+      setMessage('All fields are required');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          ...createForm,
+          adminEmail: user?.email
+        })
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) {
+        setMessage('User created successfully');
+        setShowCreateUser(false);
+        setCreateForm({ name: '', email: '', password: '', role: 'user' });
+        await refetchUsers();
+      } else {
+        setMessage(data.error || 'Failed to create user');
+      }
+    } catch (error) {
+      setMessage('Error creating user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelCreate = () => {
+    setShowCreateUser(false);
+    setCreateForm({ name: '', email: '', password: '', role: 'user' });
   };
 
   const handleDeleteComment = async (postId, commentId) => {
@@ -360,7 +451,15 @@ export default function AdminDashboard() {
 
         {!loading && activeTab === 'users' && (
           <Card className="p-6">
-            <h2 className="text-2xl font-bold mb-6">User Management</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">User Management</h2>
+              <Button
+                onClick={() => setShowCreateUser(true)}
+                disabled={loading}
+              >
+                Create User
+              </Button>
+            </div>
             
             {!users || users.length === 0 ? (
               <p className="text-gray-600">No users found.</p>
@@ -394,6 +493,14 @@ export default function AdminDashboard() {
                         <td className="px-4 py-2">
                           {u.email !== 'admin@penorbit.com' ? (
                             <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => handleEditUser(u)}
+                                disabled={loading}
+                              >
+                                Edit
+                              </Button>
                               <Button
                                 size="sm"
                                 variant={u.status === 'active' ? 'danger' : 'success'}
@@ -670,6 +777,120 @@ export default function AdminDashboard() {
           </Card>
         )}
       </div>
+      
+      {editingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-xl font-bold mb-4">Edit User</h3>
+            <div className="space-y-4">
+              <Input
+                label="Name"
+                value={editForm.name}
+                onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                placeholder="User name"
+              />
+              <Input
+                label="Email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                placeholder="User email"
+                type="email"
+              />
+              <Input
+                label="Profession"
+                value={editForm.profession}
+                onChange={(e) => setEditForm({...editForm, profession: e.target.value})}
+                placeholder="User profession"
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                <select
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({...editForm, role: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button
+                onClick={handleUpdateUser}
+                disabled={loading}
+                className="flex-1"
+              >
+                Update
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleCancelEdit}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {showCreateUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-xl font-bold mb-4">Create New User</h3>
+            <div className="space-y-4">
+              <Input
+                label="Name"
+                value={createForm.name}
+                onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
+                placeholder="User name"
+              />
+              <Input
+                label="Email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm({...createForm, email: e.target.value})}
+                placeholder="User email"
+                type="email"
+              />
+              <Input
+                label="Password"
+                value={createForm.password}
+                onChange={(e) => setCreateForm({...createForm, password: e.target.value})}
+                placeholder="User password"
+                type="password"
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                <select
+                  value={createForm.role}
+                  onChange={(e) => setCreateForm({...createForm, role: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button
+                onClick={handleCreateUser}
+                disabled={loading}
+                className="flex-1"
+              >
+                Create
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleCancelCreate}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <Toast message={message} setMessage={setMessage} loading={loading} />
     </div>
   );
